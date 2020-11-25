@@ -33,3 +33,32 @@ SELECT r.rental_date, i.film_id, count(distinct r.inventory_id) FROM rental r
 JOIN inventory i USING (inventory_id)
 GROUP BY r.rental_date, i.film_id
 ORDER BY i.film_id;
+
+USE sakila; 
+
+SELECT film_id, 
+case times_rented_last_month >= 1 then 0
+else 1 
+end as rented 
+FROM(
+SELECT film_id, 
+	sum(case 
+		when rental_date between "2005-07-01" 
+        and "2005-08-01" then 1 
+        else 0 
+        end) as times_rented_last_month
+from film left join inventory using (film_id) left join rental using (inventory_id)
+GROUP BY film_id) AS CTE; 
+
+create or replace view rentedlast as 
+select distinct f.film_id,
+case when rental_date between convert("2006-02-01", date) and convert("2006-03-01", date) then True
+else False
+end as 'rentlastmonthhelp'
+from film f
+left join inventory i using (film_id)
+join rental r using (inventory_id);
+select * from rentedlast;
+select film_id, max(rentlastmonthhelp) as rentlastmonth from rentedlast
+group by film_id;
+
